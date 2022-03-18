@@ -1,0 +1,162 @@
+{% extends "layout.html" %}
+
+{% block body %}	
+	<h1>Wacky Subs</h1>
+	<p><i>It uses pattern mining to find wacky subreddits at reddit.com</i></p>
+	<form action="formaction" method="GET"> <!-- <form action="/query" method="GET">-->	
+		<div class="input-group mb-3" style="display:block;">
+			<span class="input-group-text" id="basic-addon1">Slowly type letters of a subreddit:</span>
+			<!-- class="form-control" -->
+			<datalist id="searchTerms">
+				{% for subreddit in allsubreddits %}
+				<option value="{{ subreddit }}">
+				{% endfor %}
+			</datalist>
+			<input type="search" list="searchTerms" id="searchTerm" name="searchTerm" value="{{ searchTerm }}" autofocus aria-label="Subreddit" aria-describedby="basic-addon1">
+		</div>
+		<label for="confMin" class="form-label"> Slide left: quirky/niche  Right: mainstream </label>
+		<output id="confMinout" name="confMinout" value="{{ confMin }}">{{ confMin }}</output> <!-- value="0.01">0.01</output> -->
+		<input class="form-range" id="confMin" name="confMin" type="range" min="0.00001" max="0.3" value="{{ confMin }}" step="any" onchange="confMinout.value=value"></input>
+		<button class="btn btn-primary" type="submit" name="baction" value="query">Find</button>
+		<button class="btn btn-primary" type="submit" name="baction" value="showfavs">Favorites</button>
+	</form>
+	{% if '' != ''.join(searchList): %}
+		<h2>{{ '&nbsp;'.join(searchList) }} users tend to enjoy:</h2>
+
+	<ul>
+		{% for r in recommendations %}
+		<li>{{ r }} &nbsp;&nbsp;<a href="http://old.reddit.com/r/{{ r }}" class="link-primary">Visit</a> or <a href='/formaction?searchTerm={{ r }}&baction=query' class="link-primary">Find more</a></li>
+		{% endfor %}
+	</ul>
+	<p><i>The top results are related to your search term in ways that make sense to some kinds of people. These results are ordered by statistical lift. The calculation is based on patterns discovered in the public comments posted by humans (and bots) at these subreddits in the past.</i></p>
+	<p></p>
+	{% endif %}
+
+	{% if '' != ''.join(favorites): %}
+	<h2>Favorites</h2>
+	<ul>
+		{% for f in favorites %}
+		<li>{{ f }} &nbsp;&nbsp;<a href="http://old.reddit.com/r/{{ f }}" class="link-primary">Visit</a> or <a href='/formaction?searchTerm={{ f }}&baction=query' class="link-primary">Find more</a> or <a href='/formaction?delete={{ f }}&baction=delete' class="link-primary">Delete</a></li>
+		{% endfor %}
+	</ul>
+	{% endif %}
+
+	<script>
+     function showhide(id) {
+       	var e = document.getElementById(id);
+       	e.style.display = (e.style.display == 'block') ? 'none' : 'block';
+     }
+	</script>
+	<a href="javascript:showhide('aboutbox')">About</a>
+	<div id="aboutbox" style="display:none;">
+		<p>About</p>
+		<p><i>The goal: I wanted to build a fast and straightforward, but still pretty decent recommender system. 
+I needed first to help me -- and why not everyone else too -- find more of the good and niche subreddits that probably already existed out there somewhere.
+ It should be built using data science techniques. It should evolve the recommendations it makes, with minimal or no manual curation. 
+It should automatically pick up the new subreddits that users create. Everyone should be able to use it very easily. It should look simple on the surface. 
+
+		<p>The reason: As a redditor myself, I was having trouble finding cool new subreddits that probably exist, somewhere, but where were they?
+		 I felt like I could not find them, like I was missing out.  Yea, I will give credit, the reddit main menu, and the reddit search box, and links in the About panel in some subreddits
+ were ... okay-ish.  But these were not really doing it for me. 
+		Where is a data science-based recommender system that we can use? There were some but not enough tools to help us find subreddits better. Years go by. Still nothing at the main site?  So....
+
+		<p>The solution: This app runs data mining of frequent patterns of all the subreddits that people were posting comments to.
+		My working hypothesis was that everybody's commenting patterns taken in aggregate would reveal that people would have clusters of common interests; 
+		and that the subreddits they commented at, or not, would reflect or be a proxy for those interests. It's all implicit recommendation; nobody rates subreddits with star ratings. People just either make comments at some subreddits or not.
+		I ran the FPGrowth algorithm on a couple of months worth of all public comments at reddit.com to detect association patterns between all known subreddits that existed then. 
+
+		<p>The challenges: This is actual big data. It is web-scale. The number of public comments posted to reddit.com in a month is large, as it is possibly one of the world's top 20 web sites in user traffic. 
+		Bigger data is definitely better data in this case as it turned out.  The reason is, the smaller but quirky and interesting subreddits -- subreddits that were new to me, critically-- completely disappeared when, during performance optimization, I filtered out too much from the model based on statistical 
+		support threshold.  But the full size model was what produced best query results. The full size model ran so slow, sadly, that it was positively awful, over 1 hour to run just one query on the trained model when I clicked the Find button. 
+		It was a big dilemma: speed versus accuracy. How could I keep both though? And during model training, the working RAM requirement was fully maxing out my equipment on the best performing model, and all my swap space as well. 
+		It took several iterations to train the biggest model possible and I indeed found the exact upper limit of the envelope of my bespoke data science workstation because the resulting biggest model I could make, was clearly also producing the most interesting patterns and search results. 
+
+		<p>At first a single query took over one hour, sadly.  Happily though, a bunch of software tricks were able to cut it down, and speed it way up, down to milliseconds per query, even on the big model like you see here. (I hope to find a cheap web host that runs fast like my dev box. Not sure.).
+
+		In the end it works well enough. Try it?  What do you think of it?
+			</i></p>
+		<p></p>
+		<a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0" 
+src="https://i.creativecommons.org/l/by/4.0/88x31.png" /></a><br />
+<span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/InteractiveResource" property="dct:title" rel="dct:type">Wackysubs.com</span> by 
+<a xmlns:cc="http://creativecommons.org/ns#" href="" property="cc:attributionName" rel="cc:attributionURL">Geoffrey Anderson</a> is licensed under a 
+<a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.
+		<p><i>This app and creative work and opinions are the author's only. The author and this app are not affiliated with reddit.com.</i></p>
+	</div>
+{% endblock %}
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

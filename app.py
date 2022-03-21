@@ -8,7 +8,7 @@ print(f"flask {flask.__version__}")
 app = Flask(__name__)
 
 app.config["APPLICATION_ROOT"] = "/recommendit" # IDK if this actually does anything.
-
+import os
 import common
 import pandas as pd
 print(f"pandas {pd.__version__}")
@@ -17,24 +17,11 @@ print(f"pyarrow {pyarrow.__version__}")
 from pathlib import Path
 
 # Decide if running on dev host or public host, so path can be automatically changed. Basis: comcast isp vs amazon.com?
-#import subprocess
-#myip = subprocess.run(["wget", "-q", "-O", "-", "http://checkip.amazonaws.com"], capture_output=True)
-#isDevHost = "a.b.c.d" in str(myip.stdout) # I am NOT showing everyone my dev ip addr!
-# Put this env var into my env before running this python on dev host using bash terminal, like: export ISTHISMYDEVHOST=YES
-import os
-isDevHost = 'ISTHISMYDEVHOST' in os.environ
-if isDevHost:
-	print("Detected as running on dev web host.")
-	#adfpath = Path('ar_model_part1_confmin0003_train_2018_janfeb_saved_jan242022_feather')
-	#edfpath = Path('ar_model_part2_confmin0003_train_2018_janfeb_saved_jan242022_feather')
-	adfpath = Path('ar_model_part1_confmin0003_train_2018_janfeb_saved_mar162022_feather')
-	edfpath = Path('ar_model_part2_confmin0003_train_2018_janfeb_saved_mar162022_feather')
-else:
-	print("Detected as running on public web host.")
-	#adfpath = Path('/usr/local/etc/recommendit/ar_model_part1_confmin0003_train_2018_janfeb_saved_jan242022_feather')
-	#edfpath = Path('/usr/local/etc/recommendit/ar_model_part2_confmin0003_train_2018_janfeb_saved_jan242022_feather')
-	adfpath = Path('/usr/local/etc/recommendit/ar_model_part1_confmin0003_train_2018_janfeb_saved_mar162022_feather')
-	edfpath = Path('/usr/local/etc/recommendit/ar_model_part2_confmin0003_train_2018_janfeb_saved_mar162022_feather')
+# In advance, set these env vars on the host.
+# In Azure cloud: Portal | Home | wackysubs App Service | Settings | Configuration | Application Settings
+# In Amazon EC2 or local dev host: Just set an env var in a startup script
+adfpath = Path(os.environ['WACKYSUBSDATAPATHPART1'])
+edfpath = Path(os.environ['WACKYSUBSDATAPATHPART2'])
 
 print(f"Loading part 1 of model from path {adfpath}")
 adf = pd.read_feather(adfpath);
